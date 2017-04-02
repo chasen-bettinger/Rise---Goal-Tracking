@@ -78,7 +78,6 @@
               this.attributes['goal'] = '';
               this.attributes['time'] = 0;
               this.attributes['name'] = '';
-              this.attributes['advice'] = '';
           }
 
           if (!this.attributes['name']) {
@@ -92,8 +91,7 @@
           } else {
               this.handler.state = states.VIEWGOAL;
               this.emit(':ask', 'Welcome to Rise ' + this.attributes['name'] + '. I help you accomplish your goals. You are currently working towards: ' + this.attributes['goal'] +
-                  '. Don\'t give up! Say view to view statistics about your goal, say add followed by a number in minutes that you\'d like to add to your goal, set goal followed by your new goal to edit your current goal, ' +
-                  ' advice to receive advice, and cancel to quit this skill');
+                  '. Don\'t give up! Say options to view your options.');
           }
       },
       "AMAZON.StopIntent": function() {
@@ -164,7 +162,7 @@
       },
       'ViewGoalIntent': function() {
           if (this.attributes['time'] === 0) {
-              this.emit(':ask', 'Oops. It looks like you haven\'t entered any time for your goal yet. Begin by saying Enter followed by the time you\'ve worked on your' +
+              this.emit(':ask', 'Oops. It looks like you haven\'t entered any time for your goal yet. Begin by saying add followed by the time you\'ve worked on your' +
                   ' goal in minutes', 'Please tell me the amount of time you\'ve been working on your goal');
           } else {
               var timeInHours = Math.round10(this.attributes['time'] / 60, -1);
@@ -190,6 +188,10 @@
           }
           this.attributes['time'] += time;
           this.emit(':ask', 'You just added ' + time.toString() + ' minutes to your goal. Nice work! ');
+      },
+      'ViewOptionsIntent': function() {
+         this.emit(':ask', 'Say view to view statistics about your goal, say add followed by a number in minutes that you\'d like to add to your goal, set goal followed by your new goal to edit your current goal, ' +
+         ' advice to receive advice, and cancel to quit this skill');
       },
       'MoveToAdviceIntent': function() {
           this.handler.state = states.ADVICE;
@@ -230,7 +232,7 @@
               var speechOutput = "I\'ve found the perfect resource for you";
               var repromptSpeech = "I found a great resource for you";
               var cardTitle = "Test";
-              var cardContent = "Hope this is useful " + bookURL;
+              var cardContent = "I hope you find this is useful\n " + bookURL;
 
               that.emit(':askWithCard', speechOutput, repromptSpeech, cardTitle, cardContent);
           }).catch(function(err) {
@@ -255,21 +257,3 @@
               'Another example: how can I read faster?');
       }
   })
-
-  // // These handlers are not bound to a state
-  // var guessAttemptHandlers = {
-  //     'TooHigh': function(val) {
-  //         this.emit(':ask', val.toString() + ' is too high.', 'Try saying a smaller number.');
-  //     },
-  //     'TooLow': function(val) {
-  //         this.emit(':ask', val.toString() + ' is too low.', 'Try saying a larger number.');
-  //     },
-  //     'JustRight': function(callback) {
-  //         this.handler.state = states.STARTMODE;
-  //         this.attributes['gamesPlayed']++;
-  //         callback();
-  //     },
-  //     'NotANum': function() {
-  //         this.emit(':ask', 'Sorry, I didn\'t get that. Try saying a number.', 'Try saying a number.');
-  //     }
-  // };
