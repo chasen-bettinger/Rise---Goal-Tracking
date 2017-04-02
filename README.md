@@ -1,3 +1,4 @@
+https://cloud.githubusercontent.com/assets/24480592/24587309/0e989366-1782-11e7-823b-4ced539574f3.png
 
 ## Rise: Goal Tracking
 Rise up and accomplish your dreams. 
