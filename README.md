@@ -1,4 +1,7 @@
 
+## Rise: Goal Tracking
+Rise up and accomplish your dreams. 
+HackPrinceton 2017 submission 
 
 ## Inspiration
 
