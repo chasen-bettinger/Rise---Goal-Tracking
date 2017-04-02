@@ -1,0 +1,19 @@
+{
+  "name": "goal-tracking",
+  "version": "1.0.0",
+  "description": "Track your goals with Alexa",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chasen-bettinger/Rise---Goal-Tracking.git"
+  },
+  "author": "Chasen Bettinger",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chasen-bettinger/Rise---Goal-Tracking/issues"
+  },
+  "homepage": "https://github.com/chasen-bettinger/Rise---Goal-Tracking#readme"
+}

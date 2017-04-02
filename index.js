@@ -1,13 +1,25 @@
   'use strict';
   var Alexa = require("alexa-sdk");
+  var amazon = require('amazon-product-api');
+  const util = require('util')
   var appId = ''; //'amzn1.echo-sdk-ams.app.your-skill-id';
   exports.handler = function(event, context, callback) {
       var alexa = Alexa.handler(event, context);
       alexa.appId = appId;
       alexa.dynamoDBTableName = 'goals';
-      alexa.registerHandlers(newSessionHandlers, learnNameHandlers, setGoalHandlers, viewGoalHandlers);
+      alexa.registerHandlers(newSessionHandlers, learnNameHandlers, setGoalHandlers, viewGoalHandlers, specificHelpHandlers);
       alexa.execute();
   };
+
+  //=========================================================================================================================================
+  // Create Amazon Product Advertising client
+  //=========================================================================================================================================
+
+  var client = amazon.createClient({
+      awsId: "AKIAJTWZSCCMF2A3BYSQ",
+      awsSecret: "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",
+      awsTag: "chasenbetting-20"
+  });
 
   //=========================================================================================================================================
   // States
@@ -17,6 +29,7 @@
       LEARNNAME: '_LEARNNAME', // Alexa will learn the user's name
       SETGOAL: '_SETGOAL', // User is setting their goal
       VIEWGOAL: '_VIEWGOAL', // User is viewing their goal
+      ADVICE: '_ADVICE' // Offers the user advice
   };
 
   //=========================================================================================================================================
@@ -52,6 +65,7 @@
               return decimalAdjust('round', value, exp);
           };
       }
+
   })();
 
   //=========================================================================================================================================
@@ -64,6 +78,7 @@
               this.attributes['goal'] = '';
               this.attributes['time'] = 0;
               this.attributes['name'] = '';
+              this.attributes['advice'] = '';
           }
 
           if (!this.attributes['name']) {
@@ -77,8 +92,8 @@
           } else {
               this.handler.state = states.VIEWGOAL;
               this.emit(':ask', 'Welcome to Rise ' + this.attributes['name'] + '. I help you accomplish your goals. You are currently working towards: ' + this.attributes['goal'] +
-                  '. Don\'t give up! Say view to view statistics about your goal, enter to enter time in minutes for your goal, Set goal followed by your new goal to edit your current goal, ' +
-                  ' help to receive help, and cancel to quit this skill');
+                  '. Don\'t give up! Say view to view statistics about your goal, say add followed by a number in minutes that you\'d like to add to your goal, set goal followed by your new goal to edit your current goal, ' +
+                  ' advice to receive advice, and cancel to quit this skill');
           }
       },
       "AMAZON.StopIntent": function() {
@@ -169,16 +184,20 @@
       },
       'AddTimeIntent': function() {
           var time = parseInt(this.event.request.intent.slots.time.value);
-          if(time === 0) {
-            this.emit(':ask', 'Please say add followed by a number in minutes that you\'d like to add to your goal',
-            'Say a number of minutes that you\'d like to add');
+          if (time === 0) {
+              this.emit(':ask', 'Please say add followed by a number in minutes that you\'d like to add to your goal',
+                  'Say a number of minutes that you\'d like to add');
           }
           this.attributes['time'] += time;
           this.emit(':ask', 'You just added ' + time.toString() + ' minutes to your goal. Nice work! ');
       },
+      'MoveToAdviceIntent': function() {
+          this.handler.state = states.ADVICE;
+          this.emit(':ask', 'What would you like advice with?');
+      },
       'AMAZON.HelpIntent': function() {
           this.emit(':ask', 'Say view to view statistics about your goal, add to add time in minutes to your goal, set goal followed by your new goal to edit your current goal, ' +
-          ' help to receive help, and cancel to quit this skill');
+              ' , advice to receive advice on how to move foward, help to receive help, and cancel to quit this skill');
       },
       "AMAZON.StopIntent": function() {
           console.log("STOPINTENT");
@@ -195,79 +214,48 @@
       }
   });
 
-  // var specificHelp = Alexa.CreateStateHandler(states.HELP, {
-  //     'NewSession': function() {
-  //         this.emit('NewSession'); // Uses the handler in newSessionHandlers
-  //     },
-  //     'EnterTimeIntent': function() {
-  //         var time = parseInt(this.event.request.intent.slots.time.value);
-  //         var timeInMinutes = time / 60;
-  //         this.attributes['time'] = timeInMinutes;
-  //         this.emit('NewSession');
-  //     }
-  //     'AMAZON.HelpIntent': function() {
-  //         this.emit(':ask', 'Enter your time in minutes. For example: 60 minutes',
-  //             'Another example: 130 minutes, which equals 2 hours and 10 minutes');
-  //     },
-  //     "AMAZON.StopIntent": function() {
-  //         console.log("STOPINTENT");
-  //         this.emit(':tell', "Goodbye!");
-  //     },
-  //     "AMAZON.CancelIntent": function() {
-  //         console.log("CANCELINTENT");
-  //         this.emit(':tell', "Goodbye!");
-  //     },
-  //     'Unhandled': function() {
-  //         console.log("UNHANDLED");
-  //         this.emit(':ask', 'Enter your time in minutes. For example: 60 minutes',
-  //             'Another example: 130 minutes, which equals 2 hours and 10 minutes');
-  //     }
-  // })
-  //
-  // var guessModeHandlers = Alexa.CreateStateHandler(states.GUESSMODE, {
-  //     'NewSession': function() {
-  //         this.handler.state = '';
-  //         this.emitWithState('NewSession'); // Equivalent to the Start Mode NewSession handler
-  //     },
-  //     'NumberGuessIntent': function() {
-  //         var guessNum = parseInt(this.event.request.intent.slots.number.value);
-  //         var targetNum = this.attributes["guessNumber"];
-  //         console.log('user guessed: ' + guessNum);
-  //         if (guessNum > targetNum) {
-  //             this.emit('TooHigh', guessNum);
-  //         } else if (guessNum < targetNum) {
-  //             this.emit('TooLow', guessNum);
-  //         } else if (guessNum === targetNum) {
-  //             // With a callback, use the arrow function to preserve the correct 'this' context
-  //             this.emit('JustRight', () => {
-  //                 this.emit(':ask', guessNum.toString() + 'is correct! Would you like to play a new game?',
-  //                     'Say yes to start a new game, or no to end the game.');
-  //             })
-  //         } else {
-  //             this.emit('NotANum');
-  //         }
-  //     },
-  //     'AMAZON.HelpIntent': function() {
-  //         this.emit(':ask', 'I am thinking of a number between zero and one hundred, try to guess and I will tell you' +
-  //             ' if it is higher or lower.', 'Try saying a number.');
-  //     },
-  //     "AMAZON.StopIntent": function() {
-  //         console.log("STOPINTENT");
-  //         this.emit(':tell', "Goodbye!");
-  //     },
-  //     "AMAZON.CancelIntent": function() {
-  //         console.log("CANCELINTENT");
-  //     },
-  //     'SessionEndedRequest': function() {
-  //         console.log("SESSIONENDEDREQUEST");
-  //         this.attributes['endedSessionCount'] += 1;
-  //         this.emit(':tell', "Goodbye!");
-  //     },
-  //     'Unhandled': function() {
-  //         console.log("UNHANDLED");
-  //         this.emit(':ask', 'Sorry, I didn\'t get that. Try saying a number.', 'Try saying a number.');
-  //     }
-  // });
+  var specificHelpHandlers = Alexa.CreateStateHandler(states.ADVICE, {
+      'NewSession': function() {
+          this.emit('NewSession'); // Uses the handler in newSessionHandlers
+      },
+      'ResultsOfAdviceLookUp': function() {
+          var that = this;
+
+          client.itemSearch({
+              Keywords: 'Best Books on improving reading',
+              SearchIndex: 'Books'
+          }).then(function(results) {
+              var bookURL = results[0].DetailPageURL.toString();
+              console.log(bookURL);
+              var speechOutput = "I\'ve found the perfect resource for you";
+              var repromptSpeech = "I found a great resource for you";
+              var cardTitle = "Test";
+              var cardContent = "Hope this is useful " + bookURL;
+
+              that.emit(':askWithCard', speechOutput, repromptSpeech, cardTitle, cardContent);
+          }).catch(function(err) {
+              console.log(err);
+          });
+      },
+      'AMAZON.HelpIntent': function() {
+          this.emit(':ask', 'What would you like advice with? Say I need advice for reading faster.',
+              'Another example: how can I read faster?');
+      },
+      "AMAZON.StopIntent": function() {
+          console.log("STOPINTENT");
+          this.emit(':tell', "Goodbye!");
+      },
+      "AMAZON.CancelIntent": function() {
+          console.log("CANCELINTENT");
+          this.emit(':tell', "Goodbye!");
+      },
+      'Unhandled': function() {
+          console.log("UNHANDLED");
+          this.emit(':ask', 'What would you like advice with? Say I need advice for reading faster.',
+              'Another example: how can I read faster?');
+      }
+  })
+
   // // These handlers are not bound to a state
   // var guessAttemptHandlers = {
   //     'TooHigh': function(val) {
